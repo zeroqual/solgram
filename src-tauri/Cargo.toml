@@ -29,3 +29,4 @@ zeroize = { version = "1.8.2", features = ["zeroize_derive"] }
 rand = "0.8"
 base64 = "0.22.1"
 aes-gcm = "0.10.3"
+hmac-sha256 = "1.1.14"
