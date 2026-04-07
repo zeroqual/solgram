@@ -8,11 +8,13 @@ use rand::rngs::OsRng;
 use std::sync::Mutex;
 use zeroize::{Zeroize, Zeroizing};
 
+use crate::modules::helpers::argon2::strong_argon2;
+
 static MASTER_KEY: Lazy<Mutex<Option<Zeroizing<[u8; 32]>>>> = Lazy::new(|| Mutex::new(None)); //глобальное состоянеие для мастер ключа(хранится только в памяти)
 
 pub fn hash_password(password: &str) -> Result<String, anyhow::Error> {
     let salt = SaltString::generate(&mut OsRng);
-    let argon2 = Argon2::default();
+    let argon2 = strong_argon2();
     let password_hash = argon2
         .hash_password(password.as_bytes(), &salt)
         .map_err(|e| anyhow::anyhow!(e))?;
@@ -24,7 +26,7 @@ pub fn verify_password(password: &str, hash: &str) -> bool {
         Ok(h) => h,
         Err(_) => return false,
     };
-    Argon2::default()
+    strong_argon2()
         .verify_password(password.as_bytes(), &parsed_hash)
         .is_ok()
 }
@@ -53,7 +55,7 @@ pub fn get_master_key() -> Result<Zeroizing<[u8; 32]>, String> {
 //получаем масстер ключ из пароля + соли
 pub fn derive_master_key_from_password(password: &str, salt: &[u8]) -> [u8; 32] {
     let mut output = [0u8; 32];
-    let argon2 = Argon2::default();
+    let argon2 = strong_argon2();
     argon2
         .hash_password_into(password.as_bytes(), salt, &mut output)
         .unwrap();
